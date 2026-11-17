@@ -618,7 +618,7 @@ class RgbTool:
         apply_parser.add_argument("-n", "--dry-run", action="store_true", help="show the plan, write nothing")
         apply_parser.set_defaults(handler=self.apply)
 
-        keyboard_parser = commands.add_parser("keyboard", help="Ajazz AK820 Pro: static colour, screen image, clock")
+        keyboard_parser = commands.add_parser("keyboard", help="Ajazz AK820 Pro: lighting, screen image, clock")
         ak820pro.KeyboardCli.register(keyboard_parser)
         return parser
 

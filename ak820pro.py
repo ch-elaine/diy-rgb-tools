@@ -151,6 +151,79 @@ class AlignedClockPacket:
         yield Ak820Pro.clock_packet(self.moment)
 
 
+@dataclass
+class LightingEffect:
+    MODES = {
+        "off": 0x00,
+        "static": 0x01,
+        "single-on": 0x02,
+        "single-off": 0x03,
+        "glittering": 0x04,
+        "falling": 0x05,
+        "colourful": 0x06,
+        "breath": 0x07,
+        "spectrum": 0x08,
+        "outward": 0x09,
+        "scrolling": 0x0A,
+        "rolling": 0x0B,
+        "rotating": 0x0C,
+        "explode": 0x0D,
+        "launch": 0x0E,
+        "ripples": 0x0F,
+        "flowing": 0x10,
+        "pulsating": 0x11,
+        "tilt": 0x12,
+        "shuttle": 0x13,
+    }
+    DIRECTIONS = {"left": 0, "down": 1, "up": 2, "right": 3}
+    MODE_DIRECTIONS = {
+        "scrolling": ("up", "down"),
+        "rolling": ("left", "right"),
+        "flowing": ("left", "right"),
+        "tilt": ("left", "right"),
+    }
+    STILL_MODES = {"off", "static"}
+    MAX_LEVEL = 5
+    DEFAULT_SPEED = 3
+    DEFAULT_COLOUR = (0xFF, 0xFF, 0xFF)
+
+    mode: str = "static"
+    colour: tuple = DEFAULT_COLOUR
+    rainbow: bool = False
+    brightness: int = MAX_LEVEL
+    speed: int = DEFAULT_SPEED
+    direction: str = None
+
+    def __post_init__(self):
+        allowed_directions = self.MODE_DIRECTIONS.get(self.mode, ())
+        if self.direction is None:
+            self.direction = next(iter(allowed_directions), None)
+        elif not allowed_directions:
+            raise KeyboardError(f"the {self.mode} mode has no direction")
+        elif self.direction not in allowed_directions:
+            raise KeyboardError(f"the {self.mode} mode moves only {' or '.join(allowed_directions)}")
+
+    def packet(self):
+        packet = bytearray(FeatureChannel.REPORT_SIZE)
+        packet[0] = self.MODES[self.mode]
+        packet[1:4] = bytes(self.colour)
+        packet[8] = int(self.rainbow)
+        packet[9] = self.brightness
+        packet[10] = self.speed
+        packet[11] = self.DIRECTIONS.get(self.direction, 0)
+        packet[14:16] = b"\x55\xaa"
+        return bytes(packet)
+
+    def describe(self):
+        parts = [self.mode, "rainbow" if self.rainbow else HexColour.format(self.colour),
+                 f"brightness {self.brightness}/{self.MAX_LEVEL}"]
+        if self.mode not in self.STILL_MODES:
+            parts.append(f"speed {self.speed}/{self.MAX_LEVEL}")
+        if self.direction:
+            parts.append(f"direction {self.direction}")
+        return ", ".join(parts)
+
+
 class Ak820Pro:
     VENDOR_ID = "00000C45"
     PRODUCT_IDS = {"00008009", "0000800A"}
@@ -174,8 +247,6 @@ class Ak820Pro:
     START_RETRY_DELAY = 0.3
     UPLOAD_SETTLE_TIME = 0.1
 
-    BREATHING_EFFECT = 0x07
-    MAX_BRIGHTNESS = 5
     SCREEN_SLOTS = (1, 2, 3)
 
     def __init__(self, control_path, display_path):
@@ -218,15 +289,6 @@ class Ak820Pro:
         packet = bytearray(FeatureChannel.REPORT_SIZE)
         packet[0:3] = bytes([0x04, command, subcommand])
         packet[8:10] = value.to_bytes(2, "little")
-        return bytes(packet)
-
-    @classmethod
-    def static_colour_packet(cls, colour, brightness):
-        packet = bytearray(FeatureChannel.REPORT_SIZE)
-        packet[0] = cls.BREATHING_EFFECT
-        packet[1:4] = bytes(colour)
-        packet[9] = brightness
-        packet[14:16] = b"\x55\xaa"
         return bytes(packet)
 
     @staticmethod
@@ -281,8 +343,8 @@ class Ak820Pro:
             raise
         self._finish_session()
 
-    def set_static_colour(self, colour, brightness):
-        self._write_setting(self.LIGHTING, [self.static_colour_packet(colour, brightness)])
+    def set_lighting(self, effect):
+        self._write_setting(self.LIGHTING, [effect.packet()])
 
     def sync_clock(self):
         clock_packet = AlignedClockPacket(FeatureChannel.SEND_DELAY)
@@ -426,12 +488,22 @@ class KeyboardCli:
     def register(cls, parser):
         commands = parser.add_subparsers(dest="keyboard_command", required=True, metavar="{colour,image,time}")
 
-        colour_parser = commands.add_parser("colour", aliases=["color"], help="light every key in one static colour")
-        colour_parser.add_argument("colour", type=HexColour.parse, metavar="HEX",
-                                   help="hex code, e.g. ff8800 or '#ff8800'")
-        colour_parser.add_argument("-b", "--brightness", type=int, default=Ak820Pro.MAX_BRIGHTNESS,
-                                   choices=range(Ak820Pro.MAX_BRIGHTNESS + 1), help="0-5 (default: 5)")
-        colour_parser.set_defaults(handler=cls.set_colour)
+        levels = range(LightingEffect.MAX_LEVEL + 1)
+        colour_parser = commands.add_parser("colour", aliases=["color"], help="set the backlight mode and colour")
+        colour_parser.add_argument("colour", type=HexColour.parse, metavar="HEX", nargs="?",
+                                   default=LightingEffect.DEFAULT_COLOUR,
+                                   help="hex code, e.g. ff8800 or '#ff8800' (default: ffffff)")
+        colour_parser.add_argument("-m", "--mode", choices=LightingEffect.MODES, default="static", metavar="MODE",
+                                   help=f"{', '.join(LightingEffect.MODES)} (default: static)")
+        colour_parser.add_argument("-b", "--brightness", type=int, default=LightingEffect.MAX_LEVEL,
+                                   choices=levels, help="0-5 (default: 5)")
+        colour_parser.add_argument("-s", "--speed", type=int, default=LightingEffect.DEFAULT_SPEED,
+                                   choices=levels, help="0-5, for moving modes (default: 3)")
+        colour_parser.add_argument("-d", "--direction", choices=LightingEffect.DIRECTIONS,
+                                   help="left or right for rolling, flowing and tilt; up or down for scrolling")
+        colour_parser.add_argument("-r", "--rainbow", action="store_true",
+                                   help="cycle through all colours instead of HEX")
+        colour_parser.set_defaults(handler=cls.set_lighting)
 
         image_parser = commands.add_parser("image", help="show a GIF, PNG or JPEG on the screen")
         image_parser.add_argument("path", type=Path, help="picture or animated GIF; it is resized to 128x128")
@@ -448,11 +520,12 @@ class KeyboardCli:
         time_parser.set_defaults(handler=cls.sync_time)
 
     @staticmethod
-    def set_colour(args):
+    def set_lighting(args):
+        effect = LightingEffect(mode=args.mode, colour=args.colour, rainbow=args.rainbow,
+                                brightness=args.brightness, speed=args.speed, direction=args.direction)
         with Ak820Pro.open() as keyboard:
-            keyboard.set_static_colour(args.colour, args.brightness)
-        print(f"Keyboard: static {HexColour.format(args.colour)}, "
-              f"brightness {args.brightness}/{Ak820Pro.MAX_BRIGHTNESS}")
+            keyboard.set_lighting(effect)
+        print(f"Keyboard: {effect.describe()}")
 
     @staticmethod
     def sync_time(args):
@@ -485,7 +558,7 @@ class KeyboardCli:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Control the Ajazz AK820 Pro: static colour, screen image and clock."
+        description="Control the Ajazz AK820 Pro: lighting, screen image and clock."
     )
     KeyboardCli.register(parser)
     args = parser.parse_args()

@@ -4,7 +4,7 @@ Small Linux tools for RGB hardware that OpenRGB doesn't fully handle.
 
 - `rgbtool` saves an OpenRGB profile into the motherboard's and the RAM's own memory, so the
   lighting survives a reboot without OpenRGB running. `rgbtool keyboard` runs `ak820pro.py`.
-- `ak820pro.py` sets a static colour on the Ajazz AK820 Pro keyboard, shows a GIF, PNG or JPEG
+- `ak820pro.py` sets the Ajazz AK820 Pro backlight (static or one of its effects), shows a GIF, PNG or JPEG
   on its screen (resized to 128×128), and syncs its clock.
 - `trcc-daemon.service` starts TRCC, which drives the Thermalright cooler's screen.
 
