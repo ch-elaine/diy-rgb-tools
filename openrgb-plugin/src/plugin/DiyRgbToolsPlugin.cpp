@@ -17,12 +17,14 @@ namespace
     const std::string   PluginName           = "DIY RGB Tools";
     const std::string   CoolerKey            = "cooler";
     const std::string   BoardKey             = "board";
+    const std::string   MouseKey             = "mouse";
     const std::string   KeyboardKey          = "keyboard";
     constexpr int       SettingsSaveDelayMilliseconds = 3000;
 
     const std::vector<std::pair<std::string, std::string>> DeviceKeys =
     {
         { BoardKey,    "ASRock Polychrome board"    },
+        { MouseKey,    "Logitech G203 LIGHTSYNC"    },
         { KeyboardKey, "Ajazz AK820 Pro"            },
         { CoolerKey,   "Thermalright AX120 Digital" },
     };
@@ -45,7 +47,7 @@ OpenRGBPluginInfo DiyRgbToolsPlugin::GetPluginInfo()
 {
     OpenRGBPluginInfo pluginInfo;
     pluginInfo.Name            = PluginName;
-    pluginInfo.Description     = "Drivers with a real Save to device for the ASRock Polychrome board, "
+    pluginInfo.Description     = "Drivers with a real Save to device for the ASRock Polychrome board, the Logitech G203, "
                                  "the Ajazz AK820 Pro (with screen upload) and the Thermalright AX120 Digital";
     pluginInfo.Version         = "2.0";
     pluginInfo.Location        = OPENRGB_PLUGIN_LOCATION_TOP;
@@ -128,6 +130,7 @@ void DiyRgbToolsPlugin::Unload()
     }
 
     keyboard.reset();
+    mouse.reset();
     board.reset();
     cooler.reset();
     SaveSettings();
@@ -188,7 +191,9 @@ void DiyRgbToolsPlugin::CreateMissingDevices()
         return;
     }
 
-    const bool boardTaken = BoardIsTaken();
+    bool boardTaken = false;
+    bool mouseTaken = false;
+    FindConflicts(boardTaken, mouseTaken);
 
     CreateDevice(cooler, CoolerKey, [this]() -> std::unique_ptr<CoolerDevice>
     {
@@ -227,6 +232,24 @@ void DiyRgbToolsPlugin::CreateMissingDevices()
         });
     }
 
+    if(mouseTaken)
+    {
+        unavailableReasons[MouseKey] = "OpenRGB's own Logitech driver is using it";
+    }
+    else
+    {
+        CreateDevice(mouse, MouseKey, [this]() -> std::unique_ptr<G203Device>
+        {
+            const std::optional<std::string> path = G203Device::FindPath();
+            if(!path.has_value())
+            {
+                return nullptr;
+            }
+            return std::make_unique<G203Device>(pluginApi, Logger(), *path, settings.value(MouseKey, nlohmann::json::object()),
+                                                [this](const nlohmann::json& saved) { StoreSetting(MouseKey, saved); });
+        });
+    }
+
     CreateDevice(keyboard, KeyboardKey, [this]() -> std::unique_ptr<Ak820Device>
     {
         const std::optional<Ak820Interfaces> interfaces = Ak820Interfaces::Find();
@@ -259,19 +282,41 @@ void DiyRgbToolsPlugin::CreateDevice(std::unique_ptr<Device>& slot, const std::s
     }
 }
 
-bool DiyRgbToolsPlugin::BoardIsTaken()
+void DiyRgbToolsPlugin::FindConflicts(bool& boardTaken, bool& mouseTaken)
 {
     conflictingDrivers.clear();
+    bool genericLogitech = false;
+    bool legacyLogitech  = false;
 
     for(RGBControllerInterface* controller : pluginApi->GetRGBControllers())
     {
-        if(!(controller->GetFlags() & CONTROLLER_FLAG_VIRTUAL) && controller->GetDescription() == BoardDevice::BuiltInDescription)
+        if(controller->GetFlags() & CONTROLLER_FLAG_VIRTUAL)
         {
-            conflictingDrivers.push_back(BoardDevice::BuiltInDetector);
-            return true;
+            continue;
         }
+
+        const std::string description = controller->GetDescription();
+        const bool        isG203      = controller->GetName().find(G203Device::MarkerInName) != std::string::npos;
+
+        boardTaken      = boardTaken || description == BoardDevice::BuiltInDescription;
+        genericLogitech = genericLogitech || (isG203 && description == G203Device::GenericDescription);
+        legacyLogitech  = legacyLogitech || (isG203 && description == G203Device::LegacyDescription);
     }
-    return false;
+
+    mouseTaken = genericLogitech || legacyLogitech;
+
+    if(boardTaken)
+    {
+        conflictingDrivers.push_back(BoardDevice::BuiltInDetector);
+    }
+    if(genericLogitech)
+    {
+        conflictingDrivers.push_back(G203Device::GenericDetector);
+    }
+    if(legacyLogitech)
+    {
+        conflictingDrivers.push_back(G203Device::LegacyDetector);
+    }
 }
 
 void DiyRgbToolsPlugin::TurnOffBuiltInDrivers()
@@ -312,6 +357,10 @@ DevicesOverview DiyRgbToolsPlugin::Overview() const
         if(key == BoardKey)
         {
             device = board.get();
+        }
+        else if(key == MouseKey)
+        {
+            device = mouse.get();
         }
         else if(key == KeyboardKey)
         {

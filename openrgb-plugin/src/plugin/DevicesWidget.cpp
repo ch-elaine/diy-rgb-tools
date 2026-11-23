@@ -13,7 +13,7 @@ DevicesWidget::DevicesWidget(std::function<DevicesOverview()> overviewProviderFu
 {
     QLabel* introduction = new QLabel("These devices are driven by this plugin. Pick their lighting on the Devices page as usual; "
                                       "\"Save to device\" stores it on the hardware so it survives a restart without OpenRGB. "
-                                      "RAM and the Logitech G203 mouse stay on OpenRGB's own drivers.", this);
+                                      "RAM keeps OpenRGB's own driver and its own Save to device button.", this);
     introduction->setWordWrap(true);
 
     statusLabel = new QLabel(this);
@@ -69,7 +69,8 @@ void DevicesWidget::Refresh()
         }
 
         conflictLabel->setText("OpenRGB's own drivers still handle some of these devices (" + drivers + "), so this plugin "
-                               "leaves them alone. Turning them off needs an OpenRGB restart.");
+                               "leaves them alone. Turning them off needs an OpenRGB restart. \"Logitech HID++ 2.0\" covers every "
+                               "Logitech HID++ device, not just the G203.");
         turnOffButton->setVisible(true);
     }
     else

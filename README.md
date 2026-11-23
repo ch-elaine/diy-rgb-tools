@@ -9,14 +9,16 @@ devices itself, so each one gets a working "Save to device" button that stores t
 - **Ajazz AK820 Pro** (`0c45:8009`, by cable). Lighting is written only when you press Save to device, because the
   keyboard keeps every write in flash. The plugin's Keyboard tab uploads a GIF, PNG or JPEG to the screen and
   sets the clock.
+- **Logitech G203 LIGHTSYNC** (`046d:c092`). Save writes the effect into the mouse's onboard profile and hands the
+  mouse back to it, and closing OpenRGB does the same, so nothing keeps the mouse under software control. Its
+  firmware only draws a stored static colour when it powers up, so Static goes dark after a PC restart that keeps
+  USB powered; Breathing, Spectrum Cycle and Color Wave keep drawing themselves and survive it.
 - **Thermalright AX120 Digital** (`0416:8001`). Shows CPU or GPU temperature or usage on the digits, or rotates
   through them (all four, or just the two temperatures); set in the Cooler tab and saved with each profile. It has
   three digits, so two values can't be shown side by side. The display has no memory, so something has to keep
   sending it frames: the plugin while OpenRGB runs, and the cooler service otherwise.
 
-RAM keeps OpenRGB's own driver and its own Save to device button (enable it in OpenRGB's ENE SMBus settings). The
-Logitech G203 mouse uses OpenRGB's own "Logitech HID++ 2.0" driver. Its firmware draws a stored static colour only
-on a cold start, so after a PC reboot it stays dark until OpenRGB sets it; animated effects survive a reboot.
+RAM keeps OpenRGB's own driver and its own Save to device button (enable it in OpenRGB's ENE SMBus settings).
 
 ## Cooler service
 
@@ -36,8 +38,9 @@ you) and `/etc/systemd/system/diy-rgb-tools-cooler.service`.
 plugin (with the program inside it), and copies the plugin to `~/.config/OpenRGB/plugins`. Restart OpenRGB
 afterwards. It needs Qt 6 (`qmake6`), a C++17 compiler and `curl`.
 
-The plugin leaves the board alone while OpenRGB's own "ASRock Polychrome USB" driver is active. Its Devices tab has
-a button that turns that driver off; restart OpenRGB afterwards and save your profiles again once.
+The plugin leaves the board alone while OpenRGB's own "ASRock Polychrome USB" driver is active, and the mouse while
+"Logitech HID++ 2.0" or "Logitech G203 Lightsync" is. Its Devices tab has a button that turns those drivers off;
+restart OpenRGB afterwards and save your profiles again once.
 
 Don't run TRCC alongside the plugin or the service: it takes the AX120's USB device away from them.
 
@@ -46,4 +49,5 @@ Don't run TRCC alongside the plugin or the service: it takes the AX120's USB dev
 - ASRock B650M Pro RS, Polychrome USB controller (`26ce:01a2`)
 - RAM with ENE RGB controllers (`AUDA0-E6K5-0101`)
 - Ajazz AK820 Pro, wired, firmware 1.14 (`0c45:8009`)
+- Logitech G203 LIGHTSYNC (`046d:c092`)
 - Thermalright AX120 Digital display (`0416:8001`)
