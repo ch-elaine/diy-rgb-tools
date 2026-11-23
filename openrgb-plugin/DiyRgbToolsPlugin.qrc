@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/service">
+        <file alias="diy-rgb-tools-cooler">build/service/diy-rgb-tools-cooler</file>
+    </qresource>
+</RCC>
