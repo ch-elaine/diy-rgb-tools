@@ -8,7 +8,6 @@ INCLUDEPATH +=                              \
     src/common                              \
     src/cooler                              \
     src/service                             \
-    src/mouse                               \
     OpenRGB                                 \
     OpenRGB/RGBController                   \
     OpenRGB/dependencies/json               \
@@ -18,8 +17,6 @@ SOURCES +=                                  \
     src/service/CoolerServiceProgram.cpp    \
     src/service/CoolerServiceDaemon.cpp     \
     src/service/CoolerServiceInstaller.cpp  \
-    src/service/MouseLightingKeeper.cpp     \
-    src/mouse/G203Protocol.cpp              \
     src/common/Hidraw.cpp                   \
     src/cooler/Ax120DisplayLock.cpp         \
     src/cooler/Ax120Frame.cpp               \

@@ -14,7 +14,6 @@
 #include "CoolerDevice.h"
 #include "CoolerServiceManager.h"
 #include "DevicesWidget.h"
-#include "G203Device.h"
 
 class DiyRgbToolsPlugin : public QObject, public OpenRGBPluginInterface
 {
@@ -49,7 +48,6 @@ private:
     Ax120PluginSettings                 coolerSettings;
     std::unique_ptr<CoolerDevice>       cooler;
     std::unique_ptr<BoardDevice>        board;
-    std::unique_ptr<G203Device>         mouse;
     std::unique_ptr<Ak820Device>        keyboard;
     std::map<std::string, std::string>  unavailableReasons;
     std::vector<std::string>            conflictingDrivers;
@@ -58,7 +56,7 @@ private:
     CoolerServiceManager*               serviceManager = nullptr;
 
     void                CreateMissingDevices();
-    void                FindConflicts(bool& boardTaken, bool& mouseTaken);
+    bool                BoardIsTaken();
     void                TurnOffBuiltInDrivers();
     DevicesOverview     Overview() const;
     void                ApplyDisplayOptions(const Ax120DisplayOptions& displayOptions);

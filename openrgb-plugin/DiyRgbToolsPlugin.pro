@@ -7,7 +7,6 @@ INCLUDEPATH +=                              \
     src/common                              \
     src/cooler                              \
     src/board                               \
-    src/mouse                               \
     src/keyboard                            \
     src/plugin                              \
     OpenRGB                                 \
@@ -30,8 +29,6 @@ HEADERS +=                                  \
     src/cooler/HardwareSensors.h            \
     src/board/BoardDevice.h                 \
     src/board/PolychromeProtocol.h          \
-    src/mouse/G203Device.h                  \
-    src/mouse/G203Protocol.h                \
     src/keyboard/Ak820Device.h              \
     src/keyboard/Ak820Protocol.h            \
     src/keyboard/KeyboardAnimation.h        \
@@ -56,8 +53,6 @@ SOURCES +=                                  \
     src/cooler/HardwareSensors.cpp          \
     src/board/BoardDevice.cpp               \
     src/board/PolychromeProtocol.cpp        \
-    src/mouse/G203Device.cpp                \
-    src/mouse/G203Protocol.cpp              \
     src/keyboard/Ak820Device.cpp            \
     src/keyboard/Ak820Protocol.cpp          \
     src/keyboard/KeyboardAnimation.cpp      \
