@@ -130,6 +130,7 @@ void G203Device::Save()
     if(std::string(mode.name) != "Direct")
     {
         ReleaseIfClaimed();
+        protocol->ReloadOnboardProfile();
     }
 
     const bool isDark = effect.effectId == MouseEffect::Off || (effect.effectId == MouseEffect::Static && effect.colour == 0);

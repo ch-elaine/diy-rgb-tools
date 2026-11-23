@@ -25,6 +25,7 @@ namespace
     constexpr unsigned char             FrameEndFunction         = 0x70;
     constexpr unsigned char             SetOnboardModeFunction   = 0x10;
     constexpr unsigned char             ProfilesInfoFunction     = 0x00;
+    constexpr unsigned char             SetCurrentProfileFunction = 0x30;
     constexpr unsigned char             GetCurrentProfileFunction = 0x40;
     constexpr unsigned char             MemoryReadFunction       = 0x50;
     constexpr unsigned char             MemoryWriteStartFunction = 0x60;
@@ -108,14 +109,8 @@ ByteVector MouseEffect::Parameters() const
 
 ByteVector MouseEffect::ProfileEntry() const
 {
-    ByteVector entry{ static_cast<unsigned char>(effectId & 0xFF) };
-    ByteVector parameters = Parameters();
-
-    if(effectId == Static)
-    {
-        parameters[3] = 0;
-    }
-
+    ByteVector       entry{ static_cast<unsigned char>(effectId & 0xFF) };
+    const ByteVector parameters = Parameters();
     entry.insert(entry.end(), parameters.begin(), parameters.end());
     return entry;
 }
@@ -222,6 +217,15 @@ void G203Protocol::ClaimSoftwareControl()
 void G203Protocol::ReleaseSoftwareControl()
 {
     hidpp.Request(rgbEffects, SoftwareControlFunction, { SetRequest, 0, 0 });
+}
+
+void G203Protocol::ReloadOnboardProfile()
+{
+    if(onboardProfiles.has_value())
+    {
+        const unsigned char profileIndex = hidpp.Request(*onboardProfiles, GetCurrentProfileFunction, {}).at(1);
+        hidpp.Request(*onboardProfiles, SetCurrentProfileFunction, { 0x00, profileIndex });
+    }
 }
 
 void G203Protocol::UseOnboardMemory()

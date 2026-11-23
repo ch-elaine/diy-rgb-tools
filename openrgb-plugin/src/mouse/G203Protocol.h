@@ -49,6 +49,7 @@ public:
     void    ClaimSoftwareControl();
     void    ReleaseSoftwareControl();
     void    UseOnboardMemory();
+    void    ReloadOnboardProfile();
     void    ShowColours(const std::array<RGBColor, LedCount>& colours);
     bool    StoreProfileLighting(const MouseEffect& effect);
 
