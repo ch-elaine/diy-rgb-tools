@@ -112,7 +112,7 @@ void CoolerServiceDaemon::ReloadIfChanged()
 
 void CoolerServiceDaemon::AdvanceRotation()
 {
-    if(settings.display.content != DisplayContent::Rotate)
+    if(!settings.display.IsRotating())
     {
         return;
     }

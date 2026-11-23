@@ -102,7 +102,7 @@ void Ax120DisplayDriver::Run()
             {
                 wakeTime = nextSensorRead;
 
-                if(displayOptions.content == DisplayContent::Rotate)
+                if(displayOptions.IsRotating())
                 {
                     wakeTime = std::min(wakeTime, nextRotation);
                 }
@@ -147,7 +147,7 @@ void Ax120DisplayDriver::Run()
             nextSensorRead = now + SensorInterval;
         }
 
-        if(currentOptions.content == DisplayContent::Rotate && now >= nextRotation)
+        if(currentOptions.IsRotating() && now >= nextRotation)
         {
             rotationPhase = (rotationPhase + 1) % Ax120Frame::RotationOrder.size();
             nextRotation  = now + std::chrono::seconds(currentOptions.rotationSeconds);

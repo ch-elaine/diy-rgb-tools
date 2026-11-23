@@ -17,6 +17,12 @@ public:
         DisplayedMetric::GpuUsage,
     };
 
+    static constexpr std::array<DisplayedMetric, 2> TemperatureRotationOrder =
+    {
+        DisplayedMetric::CpuTemperature,
+        DisplayedMetric::GpuTemperature,
+    };
+
     static SegmentMask                  Mask(const Ax120DisplayOptions& displayOptions, const SensorReadings& sensorReadings,
                                              std::size_t rotationPhase);
     static std::vector<unsigned char>   Payload(const Ax120Lighting& lighting, const SegmentMask& mask);

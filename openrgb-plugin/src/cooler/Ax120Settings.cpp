@@ -14,6 +14,7 @@ namespace
         { DisplayContent::GpuTemperature, "gpu_temperature" },
         { DisplayContent::GpuUsage,       "gpu_usage"       },
         { DisplayContent::AllSegments,    "all_segments"    },
+        { DisplayContent::RotateTemperatures, "rotate_temperatures" },
     };
 
     DisplayContent DisplayContentFromName(const std::string& name)
@@ -32,6 +33,11 @@ namespace
 Ax120Lighting::Ax120Lighting()
 {
     colors.fill(ToRGBColor(255, 255, 255));
+}
+
+bool Ax120DisplayOptions::IsRotating() const
+{
+    return content == DisplayContent::Rotate || content == DisplayContent::RotateTemperatures;
 }
 
 bool Ax120DisplayOptions::operator==(const Ax120DisplayOptions& other) const

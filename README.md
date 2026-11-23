@@ -14,8 +14,9 @@ devices itself, so each one gets a working "Save to device" button that stores t
 - **Ajazz AK820 Pro** (`0c45:8009`, by cable). Lighting is written only when you press Save to device, because the
   keyboard keeps every write in flash. The plugin's Keyboard tab uploads a GIF, PNG or JPEG to the screen and
   sets the clock.
-- **Thermalright AX120 Digital** (`0416:8001`). Shows CPU or GPU temperature and usage on the digits (Cooler tab,
-  saved with each profile). The display has no memory, so something has to keep sending it frames: the plugin
+- **Thermalright AX120 Digital** (`0416:8001`). Shows CPU or GPU temperature or usage on the digits, or rotates
+  through them (all four, or just the two temperatures); set in the Cooler tab and saved with each profile. It has
+  three digits, so two values can't be shown side by side. The display has no memory, so something has to keep sending it frames: the plugin
   while OpenRGB runs, and the cooler service otherwise.
 
 RAM keeps OpenRGB's own driver and its own Save to device button (enable it in OpenRGB's ENE SMBus settings).

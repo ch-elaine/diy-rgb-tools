@@ -16,6 +16,7 @@ enum class DisplayContent
     GpuTemperature,
     GpuUsage,
     AllSegments,
+    RotateTemperatures,
 };
 
 enum class TemperatureUnit
@@ -31,6 +32,7 @@ public:
     TemperatureUnit temperatureUnit = TemperatureUnit::Celsius;
     int             rotationSeconds = 3;
 
+    bool                        IsRotating() const;
     bool                        operator==(const Ax120DisplayOptions& other) const;
     bool                        operator!=(const Ax120DisplayOptions& other) const;
     nlohmann::json              ToJson() const;

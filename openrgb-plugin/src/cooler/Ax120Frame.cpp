@@ -17,6 +17,9 @@ SegmentMask Ax120Frame::Mask(const Ax120DisplayOptions& displayOptions, const Se
         case DisplayContent::GpuTemperature: metric = DisplayedMetric::GpuTemperature; break;
         case DisplayContent::GpuUsage:       metric = DisplayedMetric::GpuUsage;       break;
         case DisplayContent::Rotate:                                                   break;
+        case DisplayContent::RotateTemperatures:
+            metric = TemperatureRotationOrder[rotationPhase % TemperatureRotationOrder.size()];
+            break;
     }
 
     return Ax120SegmentLayout::ForMetric(metric, ReadingFor(metric, sensorReadings), displayOptions.temperatureUnit);

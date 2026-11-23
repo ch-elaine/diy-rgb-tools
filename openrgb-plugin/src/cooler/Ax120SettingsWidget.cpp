@@ -29,6 +29,7 @@ Ax120SettingsWidget::Ax120SettingsWidget(DisplayOptionsProvider displayOptionsPr
 {
     contentSelector = new QComboBox(this);
     contentSelector->addItem("CPU and GPU, rotating",             static_cast<int>(DisplayContent::Rotate));
+    contentSelector->addItem("CPU and GPU temperature, rotating", static_cast<int>(DisplayContent::RotateTemperatures));
     contentSelector->addItem("CPU temperature",                   static_cast<int>(DisplayContent::CpuTemperature));
     contentSelector->addItem("CPU usage",                         static_cast<int>(DisplayContent::CpuUsage));
     contentSelector->addItem("GPU temperature",                   static_cast<int>(DisplayContent::GpuTemperature));
@@ -100,13 +101,13 @@ void Ax120SettingsWidget::ShowDisplayOptions(const Ax120DisplayOptions& displayO
     contentSelector->setCurrentIndex(contentSelector->findData(static_cast<int>(displayOptions.content)));
     temperatureUnitSelector->setCurrentIndex(temperatureUnitSelector->findData(static_cast<int>(displayOptions.temperatureUnit)));
     rotationSecondsInput->setValue(displayOptions.rotationSeconds);
-    rotationSecondsInput->setEnabled(displayOptions.content == DisplayContent::Rotate);
+    rotationSecondsInput->setEnabled(displayOptions.IsRotating());
 }
 
 void Ax120SettingsWidget::EmitDisplayOptions()
 {
     const Ax120DisplayOptions displayOptions = ShownDisplayOptions();
-    rotationSecondsInput->setEnabled(displayOptions.content == DisplayContent::Rotate);
+    rotationSecondsInput->setEnabled(displayOptions.IsRotating());
     displayOptionsChanged(displayOptions);
     RefreshStatus();
 }
