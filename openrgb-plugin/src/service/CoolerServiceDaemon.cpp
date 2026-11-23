@@ -33,6 +33,7 @@ void CoolerServiceDaemon::Run()
 
 bool CoolerServiceDaemon::Tick()
 {
+    mouseLightingKeeper.Tick();
     ReloadIfChanged();
     const SensorReadings readings = sensors.Read();
     AdvanceRotation();

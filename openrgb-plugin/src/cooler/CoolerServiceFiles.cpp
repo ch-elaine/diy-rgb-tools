@@ -25,7 +25,7 @@ bool CoolerServiceFiles::SettingsAreWritable()
 std::string CoolerServiceFiles::UnitText()
 {
     return std::string("[Unit]\n")
-         + "Description=Thermalright AX120 Digital display (DIY RGB Tools)\n"
+         + "Description=DIY RGB Tools: AX120 Digital display and G203 lighting after boot or wake\n"
          + "DefaultDependencies=no\n"
          + "After=systemd-udevd.service\n"
          + "Conflicts=shutdown.target\n"

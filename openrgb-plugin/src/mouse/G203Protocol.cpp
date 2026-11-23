@@ -8,7 +8,6 @@ namespace
     constexpr unsigned char             LongReport          = 0x11;
     constexpr std::size_t               LongReportSize      = 20;
     constexpr unsigned char             DeviceIndex         = 0xFF;
-    constexpr unsigned char             SoftwareId          = 0x0D;
     constexpr unsigned char             ErrorMarker         = 0xFF;
     constexpr unsigned char             RootFeatureIndex    = 0x00;
     constexpr unsigned char             GetFeatureFunction  = 0x00;
@@ -25,7 +24,12 @@ namespace
     constexpr unsigned char             FrameEndFunction         = 0x70;
     constexpr unsigned char             SetOnboardModeFunction   = 0x10;
     constexpr unsigned char             ProfilesInfoFunction     = 0x00;
+    constexpr unsigned char             GetOnboardModeFunction    = 0x20;
     constexpr unsigned char             SetCurrentProfileFunction = 0x30;
+    constexpr unsigned char             GetCurrentDpiIndexFunction = 0xB0;
+    constexpr unsigned char             SetCurrentDpiIndexFunction = 0xC0;
+    constexpr unsigned char             HighestDpiIndex          = 4;
+    constexpr unsigned char             GetRequest               = 0x00;
     constexpr unsigned char             GetCurrentProfileFunction = 0x40;
     constexpr unsigned char             MemoryReadFunction       = 0x50;
     constexpr unsigned char             MemoryWriteStartFunction = 0x60;
@@ -115,15 +119,16 @@ ByteVector MouseEffect::ProfileEntry() const
     return entry;
 }
 
-HidppProtocol::HidppProtocol(HidTransport& transportReference)
-    : transport(transportReference)
+HidppProtocol::HidppProtocol(HidTransport& transportReference, unsigned char softwareIdentifier)
+    : transport(transportReference),
+      softwareId(softwareIdentifier)
 {
     transport.Drain();
 }
 
 ByteVector HidppProtocol::Request(unsigned char featureIndex, unsigned char function, const ByteVector& parameters)
 {
-    const unsigned char functionByte = static_cast<unsigned char>(function | SoftwareId);
+    const unsigned char functionByte = static_cast<unsigned char>(function | softwareId);
     ByteVector          report{ LongReport, DeviceIndex, featureIndex, functionByte };
     report.insert(report.end(), parameters.begin(), parameters.end());
     report.resize(LongReportSize, 0);
@@ -173,8 +178,8 @@ std::optional<unsigned char> HidppProtocol::FeatureIndex(unsigned short featureI
     return reply[0];
 }
 
-G203Protocol::G203Protocol(HidTransport& transportReference)
-    : hidpp(transportReference)
+G203Protocol::G203Protocol(HidTransport& transportReference, unsigned char softwareId)
+    : hidpp(transportReference, softwareId)
 {
     const std::optional<unsigned char> rgbEffectsIndex     = hidpp.FeatureIndex(RgbEffectsFeature);
     const std::optional<unsigned char> perKeyLightingIndex = hidpp.FeatureIndex(PerKeyLightingFeature);
@@ -217,6 +222,45 @@ void G203Protocol::ClaimSoftwareControl()
 void G203Protocol::ReleaseSoftwareControl()
 {
     hidpp.Request(rgbEffects, SoftwareControlFunction, { SetRequest, 0, 0 });
+}
+
+std::optional<std::string> G203Protocol::FindPath()
+{
+    const ByteVector hidppLongReportMark{ 0x85, LongReport };
+
+    for(const HidrawNode& node : HidrawNode::Find(VendorId, ProductId))
+    {
+        if(node.DescriptorContains(hidppLongReportMark))
+        {
+            return node.devicePath;
+        }
+    }
+    return std::nullopt;
+}
+
+bool G203Protocol::RedrawOnboardLighting()
+{
+    if(!onboardProfiles.has_value())
+    {
+        return false;
+    }
+
+    const bool softwareControlled = hidpp.Request(rgbEffects, SoftwareControlFunction, { GetRequest }).at(1) != 0;
+    const bool onboardModeActive  = hidpp.Request(*onboardProfiles, GetOnboardModeFunction, {}).at(0) == OnboardMode;
+
+    if(softwareControlled || !onboardModeActive)
+    {
+        return false;
+    }
+
+    const unsigned char dpiIndex = hidpp.Request(*onboardProfiles, GetCurrentDpiIndexFunction, {}).at(0);
+    ReloadOnboardProfile();
+
+    if(dpiIndex <= HighestDpiIndex)
+    {
+        hidpp.Request(*onboardProfiles, SetCurrentDpiIndexFunction, { dpiIndex });
+    }
+    return true;
 }
 
 void G203Protocol::ReloadOnboardProfile()

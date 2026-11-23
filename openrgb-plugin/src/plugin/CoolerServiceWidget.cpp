@@ -52,7 +52,8 @@ void CoolerServiceWidget::ShowState()
     if(!manager->IsInstalled())
     {
         stateLabel->setText("Not installed, so the display stays dark while OpenRGB is closed. The service starts in early boot "
-                            "and drives the display until OpenRGB opens; installing it asks for your password once.");
+                            "and drives the display until OpenRGB opens; it also redraws the G203's saved lighting once after a "
+                            "reboot or wake, which the mouse doesn't do on its own. Installing it asks for your password once.");
         installButton->setText("Install cooler service");
         installButton->setVisible(true);
         removeButton->setVisible(false);
@@ -60,8 +61,9 @@ void CoolerServiceWidget::ShowState()
     else
     {
         const QString activity = manager->Activity().isEmpty() ? QString("unknown") : manager->Activity();
-        stateLabel->setText(QString("Installed (%1). It starts in early boot and drives the display while OpenRGB is closed; "
-                                    "Save to device on the cooler changes what it shows.%2")
+        stateLabel->setText(QString("Installed (%1). It starts in early boot, drives the display while OpenRGB is closed and "
+                                    "redraws the G203's saved lighting once after a reboot or wake; Save to device on the cooler changes "
+                                    "what the display shows.%2")
                             .arg(activity, manager->NeedsUpdate() ? " This plugin carries a newer version of it." : ""));
         installButton->setText("Update cooler service");
         installButton->setVisible(manager->NeedsUpdate());

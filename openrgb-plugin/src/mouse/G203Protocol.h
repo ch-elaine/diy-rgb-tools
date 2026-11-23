@@ -3,6 +3,7 @@
 #include <array>
 #include <map>
 #include <optional>
+#include <string>
 #include <vector>
 #include "Hidraw.h"
 #include "RGBControllerInterface.h"
@@ -29,27 +30,36 @@ public:
 class HidppProtocol
 {
 public:
-    explicit HidppProtocol(HidTransport& transportReference);
+    static constexpr unsigned char  PluginSoftwareId  = 0x0D;
+    static constexpr unsigned char  ServiceSoftwareId = 0x0E;
+
+    HidppProtocol(HidTransport& transportReference, unsigned char softwareIdentifier);
 
     ByteVector                      Request(unsigned char featureIndex, unsigned char function, const ByteVector& parameters);
     std::optional<unsigned char>    FeatureIndex(unsigned short featureId);
 
 private:
     HidTransport&   transport;
+    unsigned char   softwareId;
 };
 
 class G203Protocol
 {
 public:
-    static constexpr std::size_t    LedCount = 3;
+    static constexpr std::size_t    LedCount  = 3;
+    static constexpr unsigned short VendorId  = 0x046D;
+    static constexpr unsigned short ProductId = 0xC092;
 
-    explicit G203Protocol(HidTransport& transportReference);
+    static std::optional<std::string>   FindPath();
+
+    explicit G203Protocol(HidTransport& transportReference, unsigned char softwareId = HidppProtocol::PluginSoftwareId);
 
     void    StoreEffect(const MouseEffect& effect);
     void    ClaimSoftwareControl();
     void    ReleaseSoftwareControl();
     void    UseOnboardMemory();
     void    ReloadOnboardProfile();
+    bool    RedrawOnboardLighting();
     void    ShowColours(const std::array<RGBColor, LedCount>& colours);
     bool    StoreProfileLighting(const MouseEffect& effect);
 

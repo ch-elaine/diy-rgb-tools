@@ -17,8 +17,6 @@ namespace
     constexpr unsigned char WaveRightToLeft   = 6;
     constexpr RGBColor      DefaultColour     = ToRGBColor(255, 255, 255);
 
-    const ByteVector HidppLongReportDescriptorMark{ 0x85, 0x11 };
-
     const std::array<MouseModeDefinition, 6> Modes =
     {{
         { "Direct",         MouseEffect::Static,    true,  MODE_FLAG_HAS_PER_LED_COLOR | MODE_FLAG_MANUAL_SAVE,       MODE_COLORS_PER_LED       },
@@ -53,14 +51,7 @@ namespace
 
 std::optional<std::string> G203Device::FindPath()
 {
-    for(const HidrawNode& node : HidrawNode::Find(VendorId, ProductId))
-    {
-        if(node.DescriptorContains(HidppLongReportDescriptorMark))
-        {
-            return node.devicePath;
-        }
-    }
-    return std::nullopt;
+    return G203Protocol::FindPath();
 }
 
 G203Device::G203Device(OpenRGBPluginAPIInterface* pluginApiPointer, PluginLog logFunction, const std::string& devicePath,
